@@ -99,10 +99,27 @@ class CreateMutation extends Field
      */
     public function resolve($root, $args = []): Model
     {
+        $input = $args['input'];
         $this->authorize('create', $this->class);
 
-        $input = $args['input'];
+        $this->validate($input);
+
         $model = $this->model->createWithGraphQLInput($input);
         return $model;
+    }
+
+    /**
+     * Validate the input of the mutation.
+     *
+     * @param  array $input
+     * @return void
+     */
+    private function validate(array $input)
+    {
+        $rules = collect($this->model->fields())->mapWithKeys(function ($value, $key) {
+            return [$key => array_key_exists('validation', $value) ? $value['validation'] : []];
+        })->toArray();
+
+        app('validator')->make($input, $rules)->validate();
     }
 }

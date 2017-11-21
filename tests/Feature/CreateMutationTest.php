@@ -9,6 +9,7 @@ use Bakery\Tests\TestCase;
 use Bakery\Tests\WithDatabase;
 use Bakery\Http\Controller\BakeryController;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Validation\ValidationException;
 
 class CreateMutationTest extends TestCase
 {
@@ -285,5 +286,27 @@ class CreateMutationTest extends TestCase
         $this->assertDatabaseHas('posts', ['title' => 'Hello World!', 'user_id' => '2']);
         $this->assertDatabaseHas('comments', ['body' => 'First!', 'post_id' => '1']);
         $this->assertDatabaseHas('comments', ['body' => 'Great post!', 'post_id' => '1']);
+    }
+
+    /** @test */
+    public function it_validates_the_input()
+    {
+        $this->actingAs($this->createUser());
+        Gate::policy(Stubs\Post::class, Stubs\Policies\PostPolicy::class);
+
+        $this->expectException(ValidationException::class);
+
+        $query = '
+            mutation {
+                createPost(input: {
+                    slug: "invalid slug",
+                }) {
+                    id
+                }
+            }
+        ';
+
+        $response = $this->json('GET', '/graphql', ['query' => $query]);
+        dd($response->getContent());
     }
 }

@@ -35,7 +35,10 @@ class Post extends BaseModel
     {
         return [
             'id' => Type::ID(),
-            'slug' => Type::string(),
+            'slug' => [
+                'type' => Type::string(),
+                'validation' => 'alpha_dash',
+            ],
             'title' => Type::string(),
             'body' => Type::string(),
         ];
